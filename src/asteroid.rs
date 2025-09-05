@@ -1,0 +1,425 @@
+use ::rand::distributions::{Distribution, WeightedIndex};
+use ::rand::{thread_rng, Rng};
+
+use macroquad::prelude::{
+    draw_circle_lines, draw_line, draw_texture_ex, measure_text, screen_dpi_scale, screen_height,
+    screen_width, DrawTextureParams, Texture2D, BLUE, GREEN, RED, WHITE, YELLOW,
+};
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+use crate::helpers::{generate_uid, Change, Entity, MISSING_TEXTURE, TEXTURE_SET};
+use crate::import_entity;
+
+import_entity!(Asteroid);
+
+/// Random texture selector with strict weights
+/// `custom_weights` must be provided and sum to 100.0
+pub fn select_weighted_texture<'a>(
+    textures: &'a BTreeMap<PathBuf, Texture2D>,
+    subdir: &str,
+    custom_weights: Vec<f32>,
+) -> Option<&'a Texture2D> {
+    // Filter keys to only include ones in the given subdir
+    let filtered_keys: Vec<&PathBuf> = textures
+        .keys()
+        .filter(|k| k.to_string_lossy().contains(subdir))
+        .collect();
+
+    let amount = filtered_keys.len();
+    if amount == 0 {
+        return None; // no textures in this subdir
+    }
+
+    if custom_weights.len() != amount {
+        panic!(
+            "Number of weights ({}) does not match number of textures ({})",
+            custom_weights.len(),
+            amount
+        );
+    }
+
+    let sum: f32 = custom_weights.iter().sum();
+    if (sum - 100.0).abs() > f32::EPSILON {
+        panic!("Sum of weights must be exactly 100.0, got {}", sum);
+    }
+
+    let mut rng = thread_rng();
+    let dist = WeightedIndex::new(&custom_weights).unwrap();
+    let selected_index = dist.sample(&mut rng);
+
+    textures.get(filtered_keys[selected_index])
+}
+
+#[derive(PartialEq, Clone)]
+pub struct Asteroid {
+    id: u64,
+    position: Vec2,
+    speed: f32,
+    size: f32,
+    scale: f32,
+    rotation: f32,
+    direction: f32,
+    speed_multiplier: f32,
+    turn_rate: f32, // °/s
+    texture: &'static Texture2D,
+}
+
+impl Asteroid {
+    pub const ASTEROID_INIT_SIZE: f32 = 60.0;
+
+    /// Default constructor using static TEXTURE_SET
+    pub fn new_default() -> Self {
+        Self::new(None, None, None, None, None, None, None, None, None)
+    }
+
+    /// Main constructor
+    pub fn new(
+        position: Option<Vec2>,
+        speed: Option<f32>,
+        size: Option<f32>,
+        scale: Option<f32>,
+        rotation: Option<f32>,
+        direction: Option<f32>,
+        speed_multiplier: Option<f32>,
+        turn_rate: Option<f32>,
+        texture: Option<&'static Texture2D>,
+    ) -> Self {
+        let mut rng = thread_rng();
+        let new_properties = Self::new_properties();
+
+        // Default values
+        let default_position = position.unwrap_or_else(|| Self::new_alea_pos());
+        let default_speed = speed.unwrap_or(new_properties.2);
+        let default_size = size.unwrap_or(rng.gen_range(2..=3) as f32);
+        let default_scale = scale.unwrap_or(40.0);
+        let default_rotation = rotation.unwrap_or(Self::new_rotation());
+        let default_direction =
+            direction.unwrap_or(rng.gen_range(0.0..=2.0 * std::f32::consts::PI));
+        let default_speed_multiplier = speed_multiplier.unwrap_or(new_properties.1);
+        let default_turn_rate =
+            turn_rate.unwrap_or(rng.gen_range(0.5..1.5) * if rng.gen() { 1.0 } else { -1.0 });
+
+        // Texture selection:
+        let default_texture = texture // 1. specific texture
+            .or_else(|| {
+                // 2. pick from static TEXTURE_SET
+                select_weighted_texture(&TEXTURE_SET, "asteroid/", vec![85.0, 10.0, 5.0])
+            })
+            .unwrap_or(&MISSING_TEXTURE); // 3. fallback
+
+        Self {
+            id: generate_uid(),
+            position: default_position,
+            speed: default_speed,
+            size: default_size,
+            scale: default_scale,
+            rotation: default_rotation,
+            direction: default_direction,
+            speed_multiplier: default_speed_multiplier,
+            turn_rate: default_turn_rate,
+            texture: default_texture,
+        }
+    }
+
+    pub fn get_direction(&self) -> f32 {
+        self.direction
+    }
+
+    pub fn get_texture(&self) -> &Texture2D {
+        &self.texture
+    }
+
+    pub fn get_speed_multiplier(&self) -> f32 {
+        self.speed_multiplier
+    }
+
+    pub fn get_turn_rate(&self) -> f32 {
+        self.turn_rate
+    }
+
+    pub fn compute_score(&self, base: u128, multipliers: &Vec<u8>, size: Option<f32>) -> u128 {
+        base * multipliers[(size.unwrap_or(self.get_size()) - 1.0) as usize] as u128
+    }
+
+    // Moves the object based on its speed, applying inertia.
+    pub fn update(&mut self, delta_time: f64) {
+        let direction = vec2(self.direction.cos(), self.direction.sin());
+        self.rotation += delta_time as f32;
+        self.position += direction * self.speed * self.get_speed_multiplier() * delta_time as f32;
+        // Move at the opposite edge
+        self.position = Self::bound_pos(self.position);
+    }
+
+    /// Generates a random position near one of the screen edges.
+    fn new_alea_pos() -> Vec2 {
+        let mut rng = thread_rng();
+        let nearpos: f32 =
+            rng.gen_range(Self::ASTEROID_INIT_SIZE / 2.0..=Self::ASTEROID_INIT_SIZE) as f32;
+        // 1 = top, 2 = right, 3 = bottom, 4 = left
+        let nearside = rng.gen_range(1..=4);
+        let xpos: f32 = match nearside {
+            2 => screen_width() - nearpos,
+            4 => nearpos,
+            _ => rng.gen_range(0.0..=screen_width()),
+        };
+        let ypos: f32 = match nearside {
+            1 => nearpos,
+            3 => screen_height() - nearpos,
+            _ => rng.gen_range(0.0..=screen_height()),
+        };
+        vec2(xpos, ypos)
+    }
+
+    // Create properties based on each other and assign them to a tuple for the constructor
+    fn new_properties() -> (u8, f32, f32) {
+        let mut rng = thread_rng();
+        let size = rng.gen_range(1..=3);
+        let speed_multiplier = rng.gen_range(0.4..=1.5);
+        let size_to_speed = match size {
+            1 => 3.5,
+            2 => 2.0,
+            _ => 1.0,
+        };
+
+        (
+            size,
+            speed_multiplier,
+            size_to_speed * speed_multiplier * 120.0,
+        )
+    }
+
+    fn new_rotation() -> f32 {
+        let mut rng = thread_rng();
+        rng.gen_range(1.0..=2.0 * PI)
+    }
+
+    fn bound_pos(mut pos: Vec2) -> Vec2 {
+        pos.x = Self::bound_to(pos.x, screen_width());
+        pos.y = Self::bound_to(pos.y, screen_height());
+        pos
+    }
+
+    fn bound_to(coord: f32, max: f32) -> f32 {
+        if coord < 0.0 {
+            max
+        } else if coord > max {
+            0.0
+        } else {
+            coord
+        }
+    }
+
+    // Create two smaller asteroids moving forward based on rotation
+    pub fn split(&self, can_add: bool, to_add: u8, change_list: &mut Vec<Change<Asteroid>>) {
+        let mut rng = thread_rng();
+        let new_size = self.get_size() - 1.0;
+
+        if new_size <= 0.0 {
+            change_list.push(Change::Remove(self.id));
+            return;
+        }
+
+        // Determine how many asteroids to create
+        let num_to_create = if can_add { to_add } else { 1 };
+        let speed_factor = rng.gen_range(1.0..=1.5);
+
+        // Compute evenly spread angles around the opposite of current rotation
+        let base_rotation = -self.get_rotation();
+        let angle_step = PI / (num_to_create as f32); // spread children over ~180 degrees
+        let start_angle = base_rotation - PI / 2.0; // center the spread
+
+        for i in 0..num_to_create {
+            let speed = self.get_speed() * speed_factor;
+
+            // Rotation for this child
+            let rotation = start_angle + angle_step * (i as f32 + 0.5);
+
+            // Turn rate (randomized)
+            let turn_rate = self.get_turn_rate() * rng.gen_range(-1.5..=1.5);
+
+            // Compute direction vector based on rotation
+            let direction_vec =
+                Vec2::new(rotation.cos(), rotation.sin()) * 80.0 / (4.0 - self.get_size());
+
+            // Create the new asteroid
+            let new_asteroid = Asteroid::new(
+                Some(self.get_position() + direction_vec),
+                Some(speed),
+                Some(new_size),
+                None,
+                Some(rotation),
+                Some(self.direction),
+                Some(self.speed_multiplier),
+                Some(turn_rate),
+                Some(&self.texture),
+            );
+
+            change_list.push(Change::Add(new_asteroid));
+        }
+
+        // Always remove the original asteroid
+        change_list.push(Change::Remove(self.id));
+    }
+
+    pub fn grant_score(&self, score: &mut u128, multipliers: &Vec<u8>) -> u128 {
+        let award = self.compute_score(100, multipliers, Some(self.size));
+        *score += award;
+        award
+    }
+
+    pub fn draw_trajectory(&self) {
+        // Define the arrow length and compute the direction where the asteroid is moving
+        let arrow_length = 40.0;
+        // Normalize to get direction
+
+        // Get the asteroid's current position and rotation
+        let start = self.get_position();
+
+        // Calculate the direction of the arrow based on the asteroid's rotation
+        let direction = vec2(
+            self.get_direction().cos() as f32,
+            self.get_direction().sin() as f32,
+        ) * self.get_direction().signum() as f32;
+        let rotation = vec2(
+            self.get_rotation().cos() as f32,
+            -self.get_rotation().sin() as f32,
+        );
+
+        // Calculate the end point of the arrows
+        let end_rotation = start + rotation * arrow_length;
+        let end_direction = start + direction * arrow_length;
+
+        // Draw the trajectory arrow
+        draw_line(start.x, start.y, end_direction.x, end_direction.y, 2.0, RED);
+        // Draw the rotation direction of the texture arrow
+        draw_line(
+            start.x,
+            start.y,
+            end_rotation.x,
+            end_rotation.y,
+            2.0,
+            YELLOW,
+        );
+    }
+
+    pub fn draw_self(&self, debug: bool) {
+        // Ensure the size_multiplier is cast to f32 to use with scale
+        let adjusted_scale = self.scale as f32 * self.size as f32;
+        let font_size = 20.0;
+        let position = self.get_position();
+
+        draw_texture_ex(
+            self.texture,
+            // Center the texture to the asteroid's center
+            position.x - adjusted_scale as f32 / 2.0,
+            position.y - adjusted_scale as f32 / 2.0,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(Vec2::new(adjusted_scale, adjusted_scale)),
+                rotation: -self.get_rotation() as f32,
+                ..Default::default()
+            },
+        );
+
+        if debug {
+            // Attributes
+            let size_to_speed = match self.get_size() {
+                1.0 => 3.5,
+                2.0 => 2.0,
+                _ => 1.0,
+            };
+            let mut texts = Vec::from([
+                format!("x:{:.2} y:{:.2}", position.x, position.y),
+                format!("Size:{}", self.get_size()),
+                format!(
+                    "Speed:{:.2}px/s",
+                    self.get_speed() * self.get_speed_multiplier() * size_to_speed
+                ),
+                format!(
+                    "Rotation:{}|{:.3}rad",
+                    if self.get_turn_rate().signum() == 1.0 {
+                        "L"
+                    } else {
+                        "R"
+                    },
+                    self.get_rotation()
+                ),
+                format!("Turn Rate:{:.3}rad/s", self.get_turn_rate()),
+                format!("Direction: {:.3}rad", self.get_direction()),
+                format!(
+                    "Speed modifier:{:.2}%",
+                    (self.get_speed_multiplier() * 100.0)
+                ),
+                format!("UID: {}", self.id), /*format!(
+                                                 "Variant:{}",
+                                                 PathBuf::from(self.get_texture())
+                                                     .file_stem()
+                                                     .unwrap()
+                                                     .to_string_lossy()
+                                             ),*/
+            ]);
+
+            let mut debug_text_sizes: Vec<u16> = Vec::new();
+
+            for field in &texts {
+                debug_text_sizes.push(
+                    measure_text(
+                        &field.to_string(),
+                        None,
+                        font_size as u16,
+                        screen_dpi_scale(),
+                    )
+                    .width as u16,
+                );
+            }
+
+            let text_size = *debug_text_sizes.iter().max().unwrap() as f32;
+
+            // Draw besides the asteroid
+            let x_offset = if screen_width() - position.x >= text_size + 25.0 {
+                25.0 * self.get_size() as f32
+            } else {
+                -text_size + 25.0
+            };
+            let y_offset = if screen_height() - position.y >= font_size * texts.len() as f32 {
+                20.0
+            } else {
+                -font_size * texts.len() as f32
+            };
+
+            // Hitbox
+            draw_circle_lines(
+                position.x,
+                position.y,
+                20.0 * self.get_size() as f32,
+                3.0,
+                BLUE,
+            );
+            // Center
+            draw_circle_lines(position.x, position.y, 3.0, 1.5, BLUE);
+
+            for (index, field) in &mut texts.iter_mut().enumerate() {
+                draw_text(
+                    field,
+                    position.x + x_offset,
+                    (position.y + y_offset) + index as f32 * 20.0,
+                    font_size,
+                    GREEN,
+                );
+            }
+
+            // Trajectory + Rotation
+            self.draw_trajectory();
+            // Comparison line
+            draw_line(
+                self.position.x,
+                self.position.y,
+                self.position.x,
+                self.position.y - 75.0,
+                1.0,
+                WHITE,
+            );
+        }
+    }
+}

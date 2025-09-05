@@ -1,0 +1,8 @@
+Ajout de tests pour valider les comportements attendus
+
+    Tests interactifs via un sous-menu :
+    Intégrer un sous-menu accessible depuis le menu de pause (ESC/Echap).
+    Ce sous-menu contiendrait des boutons permettant de déclencher des scénarios de test :
+    Exemple : astéroïdes tournant à 1 rotation/s, vaisseau en déplacement tirant des missiles, etc.
+    Il existerait une interface à droite permettant de déclencher des fonctions:
+    Exemple: Supprimer tous les astéroïdes

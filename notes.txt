@@ -1,0 +1,6 @@
+Corriger les warnings de compilation
+Enlever capacity
+Faire le trait
+Enlever bouclier
+Enlever des commits (si possible)
+Simplifier collision?

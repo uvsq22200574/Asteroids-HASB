@@ -4,9 +4,9 @@ use crate::missile::Missile;
 use crate::spaceship::Spaceship;
 use crate::LifetimedText;
 
-use macroquad::{
-    color::Color,
-    prelude::{draw_texture_ex, screen_height, screen_width, DrawTextureParams, Texture2D, Vec2},
+use macroquad::color::WHITE;
+use macroquad::prelude::{
+    draw_texture_ex, screen_height, screen_width, DrawTextureParams, Texture2D, Vec2,
 };
 
 use std::path::PathBuf;
@@ -57,7 +57,7 @@ impl Gamestate {
             input: Vec::new(),
 
             asteroids: Vec::new(),
-            asteroids_children: 4,
+            asteroids_children: 2,
             missiles: Vec::new(),
             spaceship: Spaceship::new(),
             asteroid_limit: 26,
@@ -204,12 +204,17 @@ impl Gamestate {
                 self.get_texture(&PathBuf::from("background2.png")),
                 0.0,
                 0.0,
-                Color::from_hex(0xFFFFFF),
+                WHITE,
                 DrawTextureParams {
                     dest_size: Some(Vec2::new(screen_width(), screen_height())),
                     ..Default::default()
                 },
             );
+        }
+
+        // Draw asteroids
+        for asteroid in &self.asteroids {
+            asteroid.draw_self(self.debug);
         }
 
         // Draw spaceship
@@ -226,48 +231,45 @@ impl Gamestate {
         for text_bubble in &self.texts {
             text_bubble.display();
         }
-
-        // Draw asteroids
-        for asteroid in &self.asteroids {
-            asteroid.draw_self(self.debug);
-        }
     }
 
-    /// Returns an array with the first elements being the distribution of sizes and the last being the total score
+    /// Returns an array with the first elements being the distribution of sizes
+    /// [10.0, 20.0, 30.0] and the last element being the total score.
     pub fn get_max_score(
         &self,
         base_score: u128,
-        multipliers: &[u8],
+        multipliers: &[u8], // expected to have length 3
         children_count: u8,
         print: bool,
     ) -> [u128; 4] {
-        let mut result: [u128; 4] = [0; 4]; // [size1, size2, size3, total]
+        let mut result: [u128; 4] = [0; 4]; // [size10, size20, size30, total]
 
-        // Recursive helper function to compute contribution of one asteroid
+        // Recursive helper function to count asteroids by size
         fn accumulate_size(result: &mut [u128; 4], size: f32, children_count: u8) {
-            if size < 1.0 {
+            if size < Asteroid::SCALE {
                 return; // no smaller asteroids
             }
 
-            let index = (size.ceil() - 1.0) as usize; // map f32 size to 0..2
+            // Map size to index: 10 -> 0, 20 -> 1, 30 -> 2
+            let index = ((size / Asteroid::SCALE).round() as usize) - 1;
             if index < 3 {
-                result[index] += 1; // each asteroid counts as 1
+                result[index] += 1;
             }
 
-            // Recursively create children
+            // Recursively add children
             for _ in 0..children_count {
-                accumulate_size(result, size - 1.0, children_count);
+                accumulate_size(result, size - Asteroid::SCALE, children_count);
             }
         }
 
-        // Process all asteroids
+        // Process all asteroids in the game state
         for asteroid in &self.asteroids {
             accumulate_size(&mut result, asteroid.get_size(), children_count);
         }
 
-        // Compute total score with multipliers
+        // Compute total score
         let mut total_score: u128 = 0;
-        for (index, &multiplier) in multipliers.iter().enumerate() {
+        for (index, &multiplier) in multipliers.iter().enumerate().take(3) {
             let computed_score = result[index] * multiplier as u128 * base_score;
             if print {
                 println!(
@@ -332,9 +334,8 @@ impl Gamestate {
 
         let asteroid = Asteroid::new(
             Some(asteroid_position),
-            Some(0.0), // stationary
-            Some(3.0), // size
-            None,
+            Some(0.0),                   // stationary
+            Some(3.0 * Asteroid::SCALE), // size
             None,
             None,
             None,

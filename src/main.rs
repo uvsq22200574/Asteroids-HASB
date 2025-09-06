@@ -17,8 +17,22 @@ use macroquad::prelude::{
 use floating_text::LifetimedText;
 use key_bindings::KeyBindings;
 
-use crate::helpers::{apply_changes, Change, Entity};
+use crate::{
+    asteroid::Asteroid,
+    helpers::{apply_changes, Change, Entity},
+};
 use general::{Gamestate, TICKS};
+
+fn window_conf() -> macroquad::window::Conf {
+    macroquad::window::Conf {
+        window_title: "Asteroids".to_owned(),
+        fullscreen: true,
+        window_resizable: true,
+        window_height: 1440,
+        window_width: 2560,
+        ..Default::default()
+    }
+}
 
 /*
 For reference visit https://macroquad.rs/examples/
@@ -63,11 +77,8 @@ Altough it's outdated and vastly different
 ///
 /// # See Also
 /// - [`Gamestate`](./gamestate.rs): The core structure that tracks the game's state.
-#[macroquad::main("Asteroids")]
+#[macroquad::main(window_conf)]
 async fn main() {
-    // Fullscreen setup
-    next_frame().await;
-    macroquad::window::set_fullscreen(true);
     let mut gamestate = Gamestate::new();
 
     let mut previous_time = 0.0;
@@ -123,11 +134,7 @@ async fn main() {
                         .push(Change::Remove(asteroid.get_id()));
                 }
                 // Check the collision between the SPACESHIP and ASTEROIDS
-                let spaceship_collision = asteroid.collides_with(
-                    &gamestate.spaceship,
-                    asteroid.get_size() as f32 * 20.0,
-                    gamestate.spaceship.get_size() + 15.0,
-                );
+                let spaceship_collision = asteroid.collides_with(&gamestate.spaceship);
 
                 if gamestate.spaceship.get_life()
                     && gamestate.spaceship.get_invulnerability() <= 0.0
@@ -143,9 +150,10 @@ async fn main() {
                         &mut gamestate.asteroid_changes,
                     );
 
-                    gamestate
-                        .spaceship
-                        .modify_shield(-(5.0 / 3.0 * (asteroid.get_size() + 1.0).powf(2.0) as f32));
+                    gamestate.spaceship.modify_shield(
+                        -(5.0 / 3.0
+                            * (asteroid.get_size() / Asteroid::SCALE + 1.0).powf(2.0) as f32),
+                    );
 
                     gamestate.spaceship.set_invulnerability(0.4);
                     gamestate
@@ -162,11 +170,7 @@ async fn main() {
 
                 // Missile collisions
                 for missile in &gamestate.missiles {
-                    let collision = asteroid.collides_with(
-                        missile,
-                        asteroid.get_size() as f32 * 20.0,
-                        missile.get_size(),
-                    );
+                    let collision = asteroid.collides_with(missile);
                     if collision {
                         gamestate
                             .missile_changes

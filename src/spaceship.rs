@@ -1,9 +1,10 @@
 use crate::helpers::{generate_uid, Entity};
 use crate::import_entity;
 
+use macroquad::color::BLUE;
 use macroquad::prelude::{
-    draw_circle, draw_circle_lines, draw_line, draw_triangle, get_time, measure_text,
-    screen_dpi_scale, screen_height, screen_width, Color, LIME, PINK, RED, YELLOW,
+    draw_circle, draw_circle_lines, draw_line, draw_triangle, measure_text, screen_dpi_scale,
+    screen_height, screen_width, Color, LIME, PINK, RED, YELLOW,
 };
 
 // Call the macro
@@ -106,7 +107,7 @@ impl Spaceship {
                 self.position + rotated_front,
                 self.position + rotated_left,
                 self.position + rotated_right,
-                Color::from_hex(0xFFFF00),
+                YELLOW,
             );
         }
 
@@ -165,27 +166,28 @@ impl Spaceship {
         // === Debug rendering ===
         if debug {
             // Hitbox
-            draw_circle_lines(
-                position.x,
-                position.y,
-                self.size as f32,
-                3.0,
-                Color::from_hex(0x0000FF),
-            );
+            draw_circle_lines(position.x, position.y, self.size as f32, 3.0, BLUE);
 
             // Direction line
             self.draw_trajectory(Some(4000.0), Some(0.0));
 
-            let radius = self.get_special_radius();
-            let theta = self.get_rotation();
+            // use full real ranges, same as you normally do
+            let positions = self.generate_positions_angles(
+                std::f32::consts::PI / 2.0 + 0.2,
+                3.0 * std::f32::consts::PI / 2.0,
+                std::f32::consts::PI / 2.0,
+                3.0 * std::f32::consts::PI / 2.0 - 0.2,
+            );
 
-            let top_x = self.get_position().x + radius * theta.sin();
-            let top_y = self.get_position().y + radius * theta.cos();
-            let bottom_x = self.get_position().x - radius * theta.sin();
-            let bottom_y = self.get_position().y - radius * theta.cos();
+            let total = self.missile_capacity;
+            let half = total / 2; // integer division
 
-            draw_circle(top_x, top_y, 5.0, RED);
-            draw_circle(bottom_x, bottom_y, 5.0, LIME);
+            for i in 0..total {
+                let (pos, _) = positions[i]; // get the position corresponding to this index
+                let color = if i < half { BLUE } else { RED };
+                draw_circle(pos.x, pos.y, 5.0, color);
+            }
+
             draw_circle(self.get_position().x, self.get_position().y, 7.5, YELLOW);
 
             let font_size = 20.0;

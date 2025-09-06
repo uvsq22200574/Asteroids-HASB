@@ -30,9 +30,9 @@ pub trait Entity: Clone {
     }
 
     /// Check collision with another entity
-    fn collides_with<T: Entity>(&self, other: &T, self_size: f32, other_size: f32) -> bool {
+    fn collides_with<T: Entity>(&self, other: &T) -> bool {
         let distance = (self.get_position() - other.get_position()).length();
-        distance < self_size + other_size
+        distance < self.get_size() + other.get_size()
     }
 
     /// Find nearest entity in a slice

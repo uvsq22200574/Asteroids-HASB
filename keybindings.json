@@ -1,17 +1,17 @@
 {
   "bindings": {
-    "Fire": [
+    "MoveRight": [
       {
         "input": {
-          "Mouse": "Left"
+          "Key": "KeyD"
         },
         "modifiers": []
       }
     ],
-    "SpeedDown": [
+    "Upgrade": [
       {
         "input": {
-          "Key": "KeyS"
+          "Key": "KeyI"
         },
         "modifiers": []
       }
@@ -32,10 +32,10 @@
         "modifiers": []
       }
     ],
-    "SlowDown": [
+    "ToggleDebug": [
       {
         "input": {
-          "Key": "ShiftLeft"
+          "Key": "F3"
         },
         "modifiers": []
       }
@@ -48,10 +48,26 @@
         "modifiers": []
       }
     ],
-    "MoveLeft": [
+    "SlowDown": [
       {
         "input": {
-          "Key": "KeyA"
+          "Key": "ShiftLeft"
+        },
+        "modifiers": []
+      }
+    ],
+    "SpeedDown": [
+      {
+        "input": {
+          "Key": "KeyS"
+        },
+        "modifiers": []
+      }
+    ],
+    "Fire": [
+      {
+        "input": {
+          "Mouse": "Left"
         },
         "modifiers": []
       }
@@ -64,14 +80,6 @@
         "modifiers": []
       }
     ],
-    "ToggleDebug": [
-      {
-        "input": {
-          "Key": "F3"
-        },
-        "modifiers": []
-      }
-    ],
     "Escape": [
       {
         "input": {
@@ -80,26 +88,18 @@
         "modifiers": []
       }
     ],
-    "MoveRight": [
-      {
-        "input": {
-          "Key": "KeyD"
-        },
-        "modifiers": []
-      }
-    ],
-    "Upgrade": [
-      {
-        "input": {
-          "Key": "KeyI"
-        },
-        "modifiers": []
-      }
-    ],
     "Accelerate": [
       {
         "input": {
           "Key": "Tab"
+        },
+        "modifiers": []
+      }
+    ],
+    "MoveLeft": [
+      {
+        "input": {
+          "Key": "KeyA"
         },
         "modifiers": []
       }

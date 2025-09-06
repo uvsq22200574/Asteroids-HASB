@@ -57,7 +57,6 @@ pub struct Asteroid {
     position: Vec2,
     speed: f32,
     size: f32,
-    scale: f32,
     rotation: f32,
     direction: f32,
     speed_multiplier: f32,
@@ -66,11 +65,13 @@ pub struct Asteroid {
 }
 
 impl Asteroid {
-    pub const ASTEROID_INIT_SIZE: f32 = 60.0;
+    /// The scale of an asteroid so that it's not too small
+    /// Affects both the visual and the physics
+    pub const SCALE: f32 = 30.0;
 
     /// Default constructor using static TEXTURE_SET
     pub fn new_default() -> Self {
-        Self::new(None, None, None, None, None, None, None, None, None)
+        Self::new(None, None, None, None, None, None, None, None)
     }
 
     /// Main constructor
@@ -78,7 +79,6 @@ impl Asteroid {
         position: Option<Vec2>,
         speed: Option<f32>,
         size: Option<f32>,
-        scale: Option<f32>,
         rotation: Option<f32>,
         direction: Option<f32>,
         speed_multiplier: Option<f32>,
@@ -89,10 +89,9 @@ impl Asteroid {
         let new_properties = Self::new_properties();
 
         // Default values
-        let default_position = position.unwrap_or_else(|| Self::new_alea_pos());
+        let default_position = position.unwrap_or_else(|| Self::new_alea_pos(30.0));
         let default_speed = speed.unwrap_or(new_properties.2);
-        let default_size = size.unwrap_or(rng.gen_range(2..=3) as f32);
-        let default_scale = scale.unwrap_or(40.0);
+        let default_size = size.unwrap_or(rng.gen_range(2..=3) as f32 * Self::SCALE);
         let default_rotation = rotation.unwrap_or(Self::new_rotation());
         let default_direction =
             direction.unwrap_or(rng.gen_range(0.0..=2.0 * std::f32::consts::PI));
@@ -113,7 +112,6 @@ impl Asteroid {
             position: default_position,
             speed: default_speed,
             size: default_size,
-            scale: default_scale,
             rotation: default_rotation,
             direction: default_direction,
             speed_multiplier: default_speed_multiplier,
@@ -139,7 +137,8 @@ impl Asteroid {
     }
 
     pub fn compute_score(&self, base: u128, multipliers: &Vec<u8>, size: Option<f32>) -> u128 {
-        base * multipliers[(size.unwrap_or(self.get_size()) - 1.0) as usize] as u128
+        let index = ((size.unwrap_or(self.get_size()) / Self::SCALE) - 1.0) as usize;
+        base * multipliers[index] as u128
     }
 
     // Moves the object based on its speed, applying inertia.
@@ -152,10 +151,9 @@ impl Asteroid {
     }
 
     /// Generates a random position near one of the screen edges.
-    fn new_alea_pos() -> Vec2 {
+    fn new_alea_pos(offset: f32) -> Vec2 {
         let mut rng = thread_rng();
-        let nearpos: f32 =
-            rng.gen_range(Self::ASTEROID_INIT_SIZE / 2.0..=Self::ASTEROID_INIT_SIZE) as f32;
+        let nearpos: f32 = rng.gen_range(offset * 0.5..=offset);
         // 1 = top, 2 = right, 3 = bottom, 4 = left
         let nearside = rng.gen_range(1..=4);
         let xpos: f32 = match nearside {
@@ -171,14 +169,14 @@ impl Asteroid {
         vec2(xpos, ypos)
     }
 
-    // Create properties based on each other and assign them to a tuple for the constructor
-    fn new_properties() -> (u8, f32, f32) {
+    /// Create properties based on each other and assign them to a tuple for the constructor
+    fn new_properties() -> (f32, f32, f32) {
         let mut rng = thread_rng();
-        let size = rng.gen_range(1..=3);
+        let size = rng.gen_range(1..=3) as f32 * Self::SCALE;
         let speed_multiplier = rng.gen_range(0.4..=1.5);
         let size_to_speed = match size {
-            1 => 3.5,
-            2 => 2.0,
+            10.0 => 3.5,
+            20.0 => 2.0,
             _ => 1.0,
         };
 
@@ -213,7 +211,7 @@ impl Asteroid {
     // Create two smaller asteroids moving forward based on rotation
     pub fn split(&self, can_add: bool, to_add: u8, change_list: &mut Vec<Change<Asteroid>>) {
         let mut rng = thread_rng();
-        let new_size = self.get_size() - 1.0;
+        let new_size = self.get_size() - Self::SCALE;
 
         if new_size <= 0.0 {
             change_list.push(Change::Remove(self.id));
@@ -239,17 +237,15 @@ impl Asteroid {
             let turn_rate = self.get_turn_rate() * rng.gen_range(-1.5..=1.5);
 
             // Compute direction vector based on rotation
-            let direction_vec =
-                Vec2::new(rotation.cos(), rotation.sin()) * 80.0 / (4.0 - self.get_size());
+            let direction_vec = Vec2::new(rotation.cos(), rotation.sin()) * 0.33 * self.size;
 
             // Create the new asteroid
             let new_asteroid = Asteroid::new(
                 Some(self.get_position() + direction_vec),
                 Some(speed),
                 Some(new_size),
-                None,
                 Some(rotation),
-                Some(self.direction),
+                Some(if i % 2 == 0 { -1.0 } else { 1. } * self.direction),
                 Some(self.speed_multiplier),
                 Some(turn_rate),
                 Some(&self.texture),
@@ -304,20 +300,19 @@ impl Asteroid {
     }
 
     pub fn draw_self(&self, debug: bool) {
-        // Ensure the size_multiplier is cast to f32 to use with scale
-        let adjusted_scale = self.scale as f32 * self.size as f32;
         let font_size = 20.0;
         let position = self.get_position();
+        let draw_pos = position - self.size; // correct centering
 
         draw_texture_ex(
             self.texture,
             // Center the texture to the asteroid's center
-            position.x - adjusted_scale as f32 / 2.0,
-            position.y - adjusted_scale as f32 / 2.0,
+            draw_pos.x,
+            draw_pos.y,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(Vec2::new(adjusted_scale, adjusted_scale)),
-                rotation: -self.get_rotation() as f32,
+                dest_size: Some(Vec2::new(self.size, self.size) * 2.0),
+                rotation: -self.get_rotation(),
                 ..Default::default()
             },
         );
@@ -325,8 +320,8 @@ impl Asteroid {
         if debug {
             // Attributes
             let size_to_speed = match self.get_size() {
-                1.0 => 3.5,
-                2.0 => 2.0,
+                30.0 => 3.5,
+                60.0 => 2.0,
                 _ => 1.0,
             };
             let mut texts = Vec::from([
@@ -377,8 +372,8 @@ impl Asteroid {
             let text_size = *debug_text_sizes.iter().max().unwrap() as f32;
 
             // Draw besides the asteroid
-            let x_offset = if screen_width() - position.x >= text_size + 25.0 {
-                25.0 * self.get_size() as f32
+            let x_offset = if screen_width() - position.x >= text_size + Self::SCALE {
+                2.5 * self.get_size() as f32
             } else {
                 -text_size + 25.0
             };
@@ -389,13 +384,7 @@ impl Asteroid {
             };
 
             // Hitbox
-            draw_circle_lines(
-                position.x,
-                position.y,
-                20.0 * self.get_size() as f32,
-                3.0,
-                BLUE,
-            );
+            draw_circle_lines(position.x, position.y, self.get_size(), 1.0, BLUE);
             // Center
             draw_circle_lines(position.x, position.y, 3.0, 1.5, BLUE);
 

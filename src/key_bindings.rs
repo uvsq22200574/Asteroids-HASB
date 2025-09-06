@@ -313,7 +313,7 @@ pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {
         && (gamestate.debug || gamestate.menu.is_empty())
     {
         gamestate.summon_missile(true);
-        gamestate.spaceship.set_homming_cooldown(0.8);
+        gamestate.spaceship.set_homming_cooldown(0.08);
     }
 
     if keybindings.is_action_pressed("Upgrade") && gamestate.simulation_speed > 0.0 {
@@ -330,7 +330,7 @@ pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {
     }
 
     if keybindings.is_action_held(&action_str(&Action::SlowDown)) {
-        gamestate.simulation_speed = 0.1;
+        gamestate.simulation_speed = 0.075;
     }
 
     keybindings.clear_events();

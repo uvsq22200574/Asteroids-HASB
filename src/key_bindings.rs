@@ -199,6 +199,8 @@ pub fn default_keybindings() -> KeyBindings {
 
     kb.bind_mouse("Fire", Button::Left);
     kb.bind_mouse("FireHoming", Button::Right);
+    kb.bind_key("Fire", Key::KeyQ);
+    kb.bind_key("FireHoming", Key::KeyE);
 
     kb.bind_key("ToggleDebug", Key::F3);
     kb.bind_key("Confirm", Key::Return);
@@ -313,7 +315,7 @@ pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {
         && (gamestate.debug || gamestate.menu.is_empty())
     {
         gamestate.summon_missile(true);
-        gamestate.spaceship.set_homming_cooldown(0.08);
+        gamestate.spaceship.set_homming_cooldown(0.8);
     }
 
     if keybindings.is_action_pressed("Upgrade") && gamestate.simulation_speed > 0.0 {

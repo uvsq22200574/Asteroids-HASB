@@ -1,9 +1,23 @@
 {
   "bindings": {
-    "SpeedUp": [
+    "Confirm": [
       {
         "input": {
-          "Key": "KeyW"
+          "Key": "Return"
+        },
+        "modifiers": []
+      }
+    ],
+    "FireHoming": [
+      {
+        "input": {
+          "Mouse": "Right"
+        },
+        "modifiers": []
+      },
+      {
+        "input": {
+          "Key": "KeyE"
         },
         "modifiers": []
       }
@@ -24,6 +38,62 @@
         "modifiers": []
       }
     ],
+    "Upgrade": [
+      {
+        "input": {
+          "Key": "KeyI"
+        },
+        "modifiers": []
+      }
+    ],
+    "MoveLeft": [
+      {
+        "input": {
+          "Key": "KeyA"
+        },
+        "modifiers": []
+      }
+    ],
+    "ToggleDebug": [
+      {
+        "input": {
+          "Key": "F3"
+        },
+        "modifiers": []
+      }
+    ],
+    "Escape": [
+      {
+        "input": {
+          "Key": "Escape"
+        },
+        "modifiers": []
+      }
+    ],
+    "SlowDown": [
+      {
+        "input": {
+          "Key": "ShiftLeft"
+        },
+        "modifiers": []
+      }
+    ],
+    "SpeedUp": [
+      {
+        "input": {
+          "Key": "KeyW"
+        },
+        "modifiers": []
+      }
+    ],
+    "Accelerate": [
+      {
+        "input": {
+          "Key": "Tab"
+        },
+        "modifiers": []
+      }
+    ],
     "Fire": [
       {
         "input": {
@@ -38,80 +108,10 @@
         "modifiers": []
       }
     ],
-    "Confirm": [
-      {
-        "input": {
-          "Key": "Return"
-        },
-        "modifiers": []
-      }
-    ],
     "Pause": [
       {
         "input": {
           "Key": "Space"
-        },
-        "modifiers": []
-      }
-    ],
-    "ToggleDebug": [
-      {
-        "input": {
-          "Key": "F3"
-        },
-        "modifiers": []
-      }
-    ],
-    "SlowDown": [
-      {
-        "input": {
-          "Key": "ShiftLeft"
-        },
-        "modifiers": []
-      }
-    ],
-    "Escape": [
-      {
-        "input": {
-          "Key": "Escape"
-        },
-        "modifiers": []
-      }
-    ],
-    "MoveLeft": [
-      {
-        "input": {
-          "Key": "KeyA"
-        },
-        "modifiers": []
-      }
-    ],
-    "FireHoming": [
-      {
-        "input": {
-          "Mouse": "Right"
-        },
-        "modifiers": []
-      },
-      {
-        "input": {
-          "Key": "KeyE"
-        },
-        "modifiers": []
-      }
-    ],
-    "Accelerate": [
-      {
-        "input": {
-          "Key": "Tab"
-        },
-        "modifiers": []
-      }
-    ],
-    "Upgrade": [
-      {
-        "input": {
-          "Key": "KeyI"
         },
         "modifiers": []
       }

@@ -39,6 +39,8 @@ For reference visit https://macroquad.rs/examples/
 Altough it's outdated and vastly different
 */
 
+/* TO REWRITE */
+
 /// The main entry point of the Asteroids game.
 ///
 /// This function initializes the game environment, including window parameters, textures, and game state.
@@ -152,7 +154,7 @@ async fn main() {
 
                     gamestate.spaceship.modify_shield(
                         -(5.0 / 3.0
-                            * (asteroid.get_size() / Asteroid::SCALE + 1.0).powf(2.0) as f32),
+                            * (asteroid.get_size() / Asteroid::SCALE + 1.0).powf(2.0)),
                     );
 
                     gamestate.spaceship.set_invulnerability(0.4);

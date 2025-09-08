@@ -1,27 +1,5 @@
 {
   "bindings": {
-    "Confirm": [
-      {
-        "input": {
-          "Key": "Return"
-        },
-        "modifiers": []
-      }
-    ],
-    "FireHoming": [
-      {
-        "input": {
-          "Mouse": "Right"
-        },
-        "modifiers": []
-      },
-      {
-        "input": {
-          "Key": "KeyE"
-        },
-        "modifiers": []
-      }
-    ],
     "SpeedDown": [
       {
         "input": {
@@ -38,18 +16,10 @@
         "modifiers": []
       }
     ],
-    "Upgrade": [
+    "Escape": [
       {
         "input": {
-          "Key": "KeyI"
-        },
-        "modifiers": []
-      }
-    ],
-    "MoveLeft": [
-      {
-        "input": {
-          "Key": "KeyA"
+          "Key": "Escape"
         },
         "modifiers": []
       }
@@ -62,10 +32,10 @@
         "modifiers": []
       }
     ],
-    "Escape": [
+    "Accelerate": [
       {
         "input": {
-          "Key": "Escape"
+          "Key": "Tab"
         },
         "modifiers": []
       }
@@ -86,10 +56,16 @@
         "modifiers": []
       }
     ],
-    "Accelerate": [
+    "FireHoming": [
       {
         "input": {
-          "Key": "Tab"
+          "Mouse": "Right"
+        },
+        "modifiers": []
+      },
+      {
+        "input": {
+          "Key": "KeyE"
         },
         "modifiers": []
       }
@@ -108,10 +84,34 @@
         "modifiers": []
       }
     ],
+    "Upgrade": [
+      {
+        "input": {
+          "Key": "KeyI"
+        },
+        "modifiers": []
+      }
+    ],
     "Pause": [
       {
         "input": {
           "Key": "Space"
+        },
+        "modifiers": []
+      }
+    ],
+    "Confirm": [
+      {
+        "input": {
+          "Key": "Return"
+        },
+        "modifiers": []
+      }
+    ],
+    "MoveLeft": [
+      {
+        "input": {
+          "Key": "KeyA"
         },
         "modifiers": []
       }

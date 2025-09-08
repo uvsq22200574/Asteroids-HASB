@@ -1,10 +1,9 @@
 use crate::helpers::{generate_uid, Entity};
 use crate::import_entity;
 
-use macroquad::color::BLUE;
 use macroquad::prelude::{
     draw_circle, draw_circle_lines, draw_line, draw_triangle, measure_text, screen_dpi_scale,
-    screen_height, screen_width, Color, LIME, PINK, RED, YELLOW,
+    screen_height, screen_width, Color, LIME, PINK, RED, BLUE, YELLOW,
 };
 
 // Call the macro
@@ -92,7 +91,7 @@ impl Spaceship {
         let position = self.get_position();
 
         // === Spaceship triangle ===
-        let height = size * (PI / 3.0).cos() as f32;
+        let height = size * (PI / 3.0).cos();
 
         let front = Vec2::new(size, 0.0);
         let left = Vec2::new(-size / 2.0, height);
@@ -117,7 +116,7 @@ impl Spaceship {
             draw_circle_lines(
                 position.x,
                 position.y,
-                self.size as f32 + 2.0,
+                self.size + 2.0,
                 5.0,
                 Color::from_rgba(255, 0, 0, ((shield_strength) / 33.3 * 255.0) as u8),
             );
@@ -126,7 +125,7 @@ impl Spaceship {
             draw_circle_lines(
                 position.x,
                 position.y,
-                self.size as f32 + 7.0,
+                self.size + 7.0,
                 5.0,
                 Color::from_rgba(255, 255, 0, ((shield_strength - 33.3) / 33.3 * 255.0) as u8),
             );
@@ -135,7 +134,7 @@ impl Spaceship {
             draw_circle_lines(
                 position.x,
                 position.y,
-                self.size as f32 + 13.0,
+                self.size + 13.0,
                 5.0,
                 Color::from_rgba(0, 255, 0, ((shield_strength - 66.6) / 33.3 * 255.0) as u8),
             );
@@ -157,7 +156,7 @@ impl Spaceship {
             draw_circle_lines(
                 position.x,
                 position.y,
-                self.size as f32,
+                self.size,
                 20.0,
                 Color::from_rgba(128, 255, 255, alpha),
             );
@@ -166,7 +165,7 @@ impl Spaceship {
         // === Debug rendering ===
         if debug {
             // Hitbox
-            draw_circle_lines(position.x, position.y, self.size as f32, 3.0, BLUE);
+            draw_circle_lines(position.x, position.y, self.size, 3.0, BLUE);
 
             // Direction line
             self.draw_trajectory(Some(4000.0), Some(0.0));
@@ -184,7 +183,7 @@ impl Spaceship {
 
             for i in 0..total {
                 let (pos, _) = positions[i]; // get the position corresponding to this index
-                let color = if i < half { BLUE } else { RED };
+                let color = if i < half { LIME } else { RED };
                 draw_circle(pos.x, pos.y, 5.0, color);
             }
 

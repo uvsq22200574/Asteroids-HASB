@@ -306,6 +306,30 @@ impl KeyBindings {
     }
 }
 
+/// Game actions
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+pub enum Action {
+    SpeedUp,
+    SpeedDown,
+    MoveLeft,
+    MoveRight,
+    Stop,
+
+    Fire,
+    FireHoming,
+
+    ToggleDebug,
+    Escape,
+    Confirm,
+
+    Pause,
+    Accelerate,
+    SlowDown,
+
+    ScrollUp,
+    ScrollDown,
+}
+
 pub fn default_keybindings() -> KeyBindings {
     let mut kb = KeyBindings::new();
 
@@ -345,30 +369,6 @@ pub fn default_keybindings() -> KeyBindings {
     );
 
     kb
-}
-
-/// Game actions
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
-pub enum Action {
-    SpeedUp,
-    SpeedDown,
-    MoveLeft,
-    MoveRight,
-    Stop,
-
-    Fire,
-    FireHoming,
-
-    ToggleDebug,
-    Escape,
-    Confirm,
-
-    Pause,
-    Accelerate,
-    SlowDown,
-
-    ScrollUp,
-    ScrollDown,
 }
 
 pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {

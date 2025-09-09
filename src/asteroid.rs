@@ -273,14 +273,9 @@ impl Asteroid {
         let start = self.get_position();
 
         // Calculate the direction of the arrow based on the asteroid's rotation
-        let direction = vec2(
-            self.get_direction().cos(),
-            self.get_direction().sin(),
-        ) * self.get_direction().signum();
-        let rotation = vec2(
-            self.get_rotation().cos(),
-            -self.get_rotation().sin(),
-        );
+        let direction = vec2(self.get_direction().cos(), self.get_direction().sin())
+            * self.get_direction().signum();
+        let rotation = vec2(self.get_rotation().cos(), -self.get_rotation().sin());
 
         // Calculate the end point of the arrows
         let end_rotation = start + rotation * arrow_length;

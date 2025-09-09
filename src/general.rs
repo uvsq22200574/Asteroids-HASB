@@ -294,7 +294,7 @@ impl Gamestate {
     /// Will summon a missile from the spaceship
     pub fn summon_missile(&mut self, is_homing: bool) {
         if is_homing {
-            let capacity = self.spaceship.get_missile_capacity();
+            let capacity = self.spaceship.get_missile_capacity() as usize;
             let positions = self.spaceship.generate_positions_angles(
                 std::f32::consts::PI / 2.0 + 0.2,
                 3.0 * std::f32::consts::PI / 2.0,

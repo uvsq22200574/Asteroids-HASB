@@ -3,7 +3,7 @@ use crate::import_entity;
 
 use macroquad::prelude::{
     draw_circle, draw_circle_lines, draw_line, draw_triangle, measure_text, screen_dpi_scale,
-    screen_height, screen_width, Color, LIME, PINK, RED, BLUE, YELLOW,
+    screen_height, screen_width, Color, BLUE, LIME, PINK, RED, YELLOW,
 };
 
 // Call the macro
@@ -17,7 +17,7 @@ pub struct Spaceship {
     max_speed: f32,
     rotation: f32,
     turn_rate: f32,
-    missile_capacity: usize,
+    missile_capacity: u8,
     special_radius: f32,
     size: f32,
     shield: f32,
@@ -182,7 +182,7 @@ impl Spaceship {
             let half = total / 2; // integer division
 
             for i in 0..total {
-                let (pos, _) = positions[i]; // get the position corresponding to this index
+                let (pos, _) = positions[i as usize]; // get the position corresponding to this index
                 let color = if i < half { LIME } else { RED };
                 draw_circle(pos.x, pos.y, 5.0, color);
             }
@@ -413,7 +413,7 @@ impl Spaceship {
         self.turn_rate
     }
 
-    pub fn get_missile_capacity(&self) -> usize {
+    pub fn get_missile_capacity(&self) -> u8 {
         self.missile_capacity
     }
 
@@ -457,8 +457,15 @@ impl Spaceship {
         self.invulnerability += amount;
     }
 
-    pub fn modify_capacity(&mut self, amount: usize) {
-        self.missile_capacity += amount;
+    pub fn modify_capacity(&mut self, delta: i8) {
+        if delta >= 0 {
+            // saturating_add to avoid overflow, then clamp to MAX-1
+            self.missile_capacity =
+                (self.missile_capacity.saturating_add(delta as u8)).min(u8::MAX - 1);
+        } else {
+            // saturating_sub ensures it never goes below 0
+            self.missile_capacity = self.missile_capacity.saturating_sub((-delta) as u8);
+        }
     }
 
     pub fn set_invulnerability(&mut self, amount: f64) {

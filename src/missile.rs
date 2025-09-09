@@ -120,9 +120,8 @@ impl Missile {
             }
         }
         self.rotation %= PI * 2.0;
-        self.position += vec2(self.rotation.cos(), -self.rotation.sin())
-            * (self.speed)
-            * delta_time as f32;
+        self.position +=
+            vec2(self.rotation.cos(), -self.rotation.sin()) * (self.speed) * delta_time as f32;
 
         if self.position.x < 0.0
             || self.position.x > screen_width()

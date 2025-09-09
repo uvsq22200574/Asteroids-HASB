@@ -153,8 +153,7 @@ async fn main() {
                     );
 
                     gamestate.spaceship.modify_shield(
-                        -(5.0 / 3.0
-                            * (asteroid.get_size() / Asteroid::SCALE + 1.0).powf(2.0)),
+                        -(5.0 / 3.0 * (asteroid.get_size() / Asteroid::SCALE + 1.0).powf(2.0)),
                     );
 
                     gamestate.spaceship.set_invulnerability(0.4);

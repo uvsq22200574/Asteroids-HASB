@@ -8,7 +8,7 @@ use macroquad::prelude::{
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use crate::helpers::{generate_uid, Change, Entity, MISSING_TEXTURE, TEXTURE_SET};
+use crate::helpers::{generate_uid, Change, Entity, NamedTexture, MISSING_TEXTURE, TEXTURE_SET};
 use crate::import_entity;
 
 import_entity!(Asteroid);
@@ -19,7 +19,7 @@ pub fn select_weighted_texture<'a>(
     textures: &'a BTreeMap<PathBuf, Texture2D>,
     subdir: &str,
     custom_weights: Vec<f32>,
-) -> Option<&'a Texture2D> {
+) -> Option<NamedTexture> {
     // Filter keys to only include ones in the given subdir
     let filtered_keys: Vec<&PathBuf> = textures
         .keys()
@@ -48,7 +48,15 @@ pub fn select_weighted_texture<'a>(
     let dist = WeightedIndex::new(&custom_weights).unwrap();
     let selected_index = dist.sample(&mut rng);
 
-    textures.get(filtered_keys[selected_index])
+    let selected_path = filtered_keys[selected_index];
+    textures.get(selected_path).map(|tex| NamedTexture {
+        texture: tex.clone(),
+        name: selected_path
+            .file_stem()
+            .unwrap()
+            .to_string_lossy()
+            .to_string(),
+    })
 }
 
 #[derive(PartialEq, Clone)]
@@ -60,8 +68,8 @@ pub struct Asteroid {
     rotation: f32,
     direction: f32,
     speed_multiplier: f32,
-    turn_rate: f32, // °/s
-    texture: &'static Texture2D,
+    turn_rate: f32,
+    texture: NamedTexture,
 }
 
 impl Asteroid {
@@ -83,7 +91,7 @@ impl Asteroid {
         direction: Option<f32>,
         speed_multiplier: Option<f32>,
         turn_rate: Option<f32>,
-        texture: Option<&'static Texture2D>,
+        texture: Option<NamedTexture>,
     ) -> Self {
         let mut rng = thread_rng();
         let new_properties = Self::new_properties();
@@ -100,12 +108,9 @@ impl Asteroid {
             turn_rate.unwrap_or(rng.gen_range(0.5..1.5) * if rng.gen() { 1.0 } else { -1.0 });
 
         // Texture selection:
-        let default_texture = texture // 1. specific texture
-            .or_else(|| {
-                // 2. pick from static TEXTURE_SET
-                select_weighted_texture(&TEXTURE_SET, "asteroid/", vec![85.0, 10.0, 5.0])
-            })
-            .unwrap_or(&MISSING_TEXTURE); // 3. fallback
+        let default_texture = texture
+            .or_else(|| select_weighted_texture(&TEXTURE_SET, "asteroid/", vec![85.0, 10.0, 5.0]))
+            .unwrap_or_else(|| MISSING_TEXTURE.clone());
 
         Self {
             id: generate_uid(),
@@ -124,7 +129,7 @@ impl Asteroid {
         self.direction
     }
 
-    pub fn get_texture(&self) -> &Texture2D {
+    pub fn get_texture(&self) -> &NamedTexture {
         &self.texture
     }
 
@@ -144,7 +149,7 @@ impl Asteroid {
     // Moves the object based on its speed, applying inertia.
     pub fn update(&mut self, delta_time: f64) {
         let direction = vec2(self.direction.cos(), self.direction.sin());
-        self.rotation += delta_time as f32;
+        self.rotation += self.turn_rate * delta_time as f32;
         self.position += direction * self.speed * self.get_speed_multiplier() * delta_time as f32;
         // Move at the opposite edge
         self.position = Self::bound_pos(self.position);
@@ -234,7 +239,16 @@ impl Asteroid {
             let rotation = start_angle + angle_step * (i as f32 + 0.5);
 
             // Turn rate (randomized)
-            let turn_rate = self.get_turn_rate() * rng.gen_range(-1.5..=1.5);
+            // Base magnitude of parent's turn rate
+            let base_magnitude = self.get_turn_rate().abs();
+
+            // Random factor between 0.5 and 1.5 for "speed up or slow down"
+            let factor = rng.gen_range(0.5..=1.5);
+
+            // Randomly flip direction
+            let sign = if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
+
+            let turn_rate = base_magnitude * factor * sign;
 
             // Compute direction vector based on rotation
             let direction_vec = Vec2::new(rotation.cos(), rotation.sin()) * 0.33 * self.size;
@@ -248,7 +262,7 @@ impl Asteroid {
                 Some(if i % 2 == 0 { -1.0 } else { 1. } * self.direction),
                 Some(self.speed_multiplier),
                 Some(turn_rate),
-                Some(&self.texture),
+                Some(self.texture.clone()),
             );
 
             change_list.push(Change::Add(new_asteroid));
@@ -300,7 +314,7 @@ impl Asteroid {
         let draw_pos = position - self.size; // correct centering
 
         draw_texture_ex(
-            self.texture,
+            &self.texture.texture,
             // Center the texture to the asteroid's center
             draw_pos.x,
             draw_pos.y,
@@ -341,13 +355,8 @@ impl Asteroid {
                     "Speed modifier:{:.2}%",
                     (self.get_speed_multiplier() * 100.0)
                 ),
-                format!("UID: {}", self.id), /*format!(
-                                                 "Variant:{}",
-                                                 PathBuf::from(self.get_texture())
-                                                     .file_stem()
-                                                     .unwrap()
-                                                     .to_string_lossy()
-                                             ),*/
+                format!("Variant:{}", self.get_texture().name),
+                format!("UID: {}", self.id),
             ]);
 
             let mut debug_text_sizes: Vec<u16> = Vec::new();
@@ -368,9 +377,9 @@ impl Asteroid {
 
             // Draw besides the asteroid
             let x_offset = if screen_width() - position.x >= text_size + Self::SCALE {
-                2.5 * self.get_size() as f32
+                self.get_size() + 5.0
             } else {
-                -text_size + 25.0
+                -text_size - self.get_size()
             };
             let y_offset = if screen_height() - position.y >= font_size * texts.len() as f32 {
                 20.0

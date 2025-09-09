@@ -115,7 +115,14 @@ macro_rules! import_entity {
 }
 
 /// Textures
-pub static MISSING_TEXTURE: Lazy<Texture2D> = Lazy::new(|| {
+
+#[derive(Clone, PartialEq)]
+pub struct NamedTexture {
+    pub texture: Texture2D,
+    pub name: String,
+}
+
+pub static MISSING_TEXTURE: Lazy<NamedTexture> = Lazy::new(|| {
     let pixels: Vec<u8> = vec![
         255, 0, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255, 255,
     ];
@@ -126,7 +133,11 @@ pub static MISSING_TEXTURE: Lazy<Texture2D> = Lazy::new(|| {
     };
     let tex = Texture2D::from_image(&image);
     tex.set_filter(FilterMode::Nearest);
-    tex
+
+    NamedTexture {
+        texture: tex,
+        name: "MISSING_TEXTURE".to_string(),
+    }
 });
 
 pub static TEXTURE_SET: Lazy<BTreeMap<PathBuf, Texture2D>> = Lazy::new(|| {

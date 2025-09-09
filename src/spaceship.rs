@@ -42,7 +42,7 @@ impl Spaceship {
             size: 25.0,
             shield: 100.0,
             shield_timer: 0.0,
-            invulnerability: 3.5,
+            invulnerability: 3.0,
             alive: true,
             hom_cooldown: 0.0,
             fire_cooldown: 0.0,

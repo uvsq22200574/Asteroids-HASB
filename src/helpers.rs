@@ -77,7 +77,9 @@ where
 #[macro_export]
 macro_rules! import_entity {
     ($t:ty) => {
+        #[allow(unused_imports)]
         use macroquad::prelude::{draw_text, vec2, Vec2};
+        #[allow(unused_imports)]
         use std::f32::consts::PI;
 
         impl $crate::helpers::Entity for $t {

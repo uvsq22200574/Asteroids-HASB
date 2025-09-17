@@ -104,8 +104,7 @@ impl Asteroid {
         let default_direction =
             direction.unwrap_or(rng.gen_range(0.0..=2.0 * std::f32::consts::PI));
         let default_speed_multiplier = speed_multiplier.unwrap_or(new_properties.1);
-        let default_turn_rate =
-            turn_rate.unwrap_or(rng.gen_range(0.5..1.5) * if rng.gen() { 1.0 } else { -1.0 });
+        let default_turn_rate = turn_rate.unwrap_or(rng.gen_range(0.5..1.5) * if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
 
         // Texture selection:
         let default_texture = texture

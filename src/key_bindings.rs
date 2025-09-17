@@ -99,6 +99,7 @@ struct InputState {
     just_released: Vec<String>,
 }
 
+#[allow(unused)]
 impl KeyBindings {
     /// Create empty keybindings
     pub fn new() -> Self {

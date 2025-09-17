@@ -23,6 +23,7 @@ pub struct Missile {
     target: Vec2,
 }
 
+#[allow(unused)]
 impl Missile {
     /// Create a missile projectile
     pub fn new(position: Vec2, speed: f32, rotation: f32, homing: bool, target: Vec2) -> Self {

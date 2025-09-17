@@ -80,6 +80,7 @@ Altough it's outdated and vastly different
 /// # See Also
 /// - [`Gamestate`](./gamestate.rs): The core structure that tracks the game's state.
 #[macroquad::main(window_conf)]
+
 async fn main() {
     let mut gamestate = Gamestate::new();
 

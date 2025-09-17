@@ -28,6 +28,7 @@ pub struct Spaceship {
     fire_cooldown: f64,
 }
 
+#[allow(unused)]
 impl Spaceship {
     pub fn new() -> Self {
         Spaceship {

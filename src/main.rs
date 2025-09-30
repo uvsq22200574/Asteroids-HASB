@@ -1,27 +1,14 @@
-// Load the modules
-mod asteroid;
-mod floating_text;
-mod general;
-mod helpers;
-mod key_bindings;
-mod menus;
-mod missile;
-mod spaceship;
-
-use ::rand::{thread_rng, Rng};
-use macroquad::prelude::{
-    get_time, next_frame, screen_height, screen_width, vec2, Vec2, GOLD, GREEN, MAGENTA, WHITE,
-};
-
-// Keybindings
-use floating_text::LifetimedText;
-use key_bindings::KeyBindings;
-
-use crate::{
+use ::rand::{Rng, thread_rng};
+use ast_core::{
     asteroid::Asteroid,
-    helpers::{apply_changes, Change, Entity},
+    floating_text::LifetimedText,
+    gamestate::{Gamestate, TICKS},
+    key_bindings, menus,
 };
-use general::{Gamestate, TICKS};
+use ast_lib::{Change, CosmicEntity, apply_changes};
+use macroquad::prelude::{
+    GOLD, GREEN, MAGENTA, Vec2, WHITE, get_time, next_frame, screen_height, screen_width, vec2,
+};
 
 fn window_conf() -> macroquad::window::Conf {
     macroquad::window::Conf {
@@ -39,46 +26,60 @@ For reference visit https://macroquad.rs/examples/
 Altough it's outdated and vastly different
 */
 
-/* TO REWRITE */
-
-/// The main entry point of the Asteroids game.
+/// Entry point of the Asteroids simulation/game.
 ///
-/// This function initializes the game environment, including window parameters, textures, and game state.
-/// It then enters the game loop, which:
-/// - Handles player input.
-/// - Updates the game state (e.g., physics, collisions, and game logic).
-/// - Renders the game visuals, including the background, asteroids, spaceship, and missiles.
+/// This function sets up the application window (via the `#[macroquad::main]` attribute),
+/// initializes the game state, loads user keybindings, and then runs the main game loop.
+/// The loop is asynchronous (`async fn main`) to allow `macroquad`’s frame scheduling.
 ///
-/// The game loop is designed to be frame-rate independent using a delta-time (DT) system.
-/// This ensures smooth animations and consistent behavior, regardless of the frame rate.
+/// # Responsibilities
 ///
-/// # Features
-/// - **Initialization**: Sets up the game window and loads necessary textures.
-/// - **Game Loop**:
-///   - Handles input from the player (e.g., spaceship movement, firing missiles).
-///   - Updates the positions, rotations, and states of game objects.
-///   - Checks for and resolves collisions (e.g., between asteroids, missiles, and the spaceship).
-///   - Displays the current game state, including debug information if enabled.
-/// - **Game State Management**:
-///   - Ends the game when the player loses all lives or destroys all asteroids.
-///   - Manages transitions to the main menu or victory screen.
+/// - **Initialization**
+///   - Creates a new [`Gamestate`] instance.
+///   - Loads keybindings from `keybindings.json`, falling back to defaults if the file is missing.
+///   - Starts listening for key events.
+///   - Sets up random number generation and time tracking.
 ///
-/// # Delta-Time System
-/// The delta-time (DT) system ensures physics calculations and movements are time-based rather than
-/// frame-based. This provides consistent gameplay across varying system performance.
+/// - **Game loop**
+///   Runs continuously until the player exits. Each iteration:
 ///
-/// # Window Initialization
-/// - The game starts in fullscreen mode.
-/// - Waits until the screen dimensions are updated from the default `800x600`.
+///   1. Computes delta time and updates the simulation accumulator.
+///   2. Register input by recording currently held keys.
+///   3. Performs fixed-timestep updates while the accumulator exceeds the tick interval:
+///      - Removes missiles outside the screen bounds.
+///      - Applies queued changes to the missile list.
+///      - Updates asteroids:
+///        - Removes destroyed asteroids.
+///        - Detects and resolves collisions with the spaceship.
+///        - Detects and resolves collisions with missiles, updating score and spawning text.
+///      - Removes expired text popups.
+///      - Randomly discards asteroids (cooldown-based).
+///   4. Renders the current state (`update_all`, `draw_all`).
+///   5. Processes input handling via [`key_bindings::handle_input`].
+///   6. Draws simulation menus and executes menu-driven actions such as:
+///      - Exit the game
+///      - Clear all asteroids and reset score
+///      - Split all asteroids
+///      - Spawn a debug asteroid
 ///
-/// Once launched, use the appropriate input controls to play.
+/// - **Exit**
+///   - Exits the loop when the player chooses "Exit" in the menu or when `gamestate.exit` is set.
+///   - Saves the current keybindings back to `keybindings.json`.
 ///
 /// # Notes
-/// - This function runs asynchronously due to the use of the `macroquad` library.
-/// - Ensure all textures are placed in the correct directory to avoid runtime errors.
+/// - The simulation speed is managed using `delta_time` and `accumulator`
+///   to ensure fixed-timestep updates (`TICKS` constant).
+/// - Collisions are resolved deterministically inside the asteroid update loop.
+/// - Randomness (`thread_rng`) is used for asteroid splitting, collision knockback,
+///   and text placement offsets.
+/// - UI and menus are drawn each frame after simulation updates.
 ///
-/// # See Also
-/// - [`Gamestate`](./gamestate.rs): The core structure that tracks the game's state.
+/// # Panics
+/// - This function does not explicitly panic, but may panic indirectly if
+///   asset loading, drawing, or file I/O in dependent modules fails.
+///
+/// # Errors
+/// - Keybindings save errors are caught at the end of execution and logged to stderr.
 #[macroquad::main(window_conf)]
 
 async fn main() {
@@ -89,13 +90,14 @@ async fn main() {
     let mut rng = thread_rng();
 
     // Initialize keybindings
-    let keybindings: KeyBindings = match KeyBindings::load("keybindings.json") {
-        Ok(kb) => kb,
-        Err(_) => {
-            println!("Couldn't find the keybinds file");
-            key_bindings::default_keybindings()
-        }
-    };
+    let keybindings: key_bindings::KeyBindings =
+        match key_bindings::KeyBindings::load("keybindings.json") {
+            Ok(kb) => kb,
+            Err(_) => {
+                println!("Couldn't find the keybinds file");
+                key_bindings::default_keybindings()
+            }
+        };
     println!("Don't forget that keybinds do not update automatically if the file is there !");
     keybindings.start_listening();
 
@@ -110,7 +112,7 @@ async fn main() {
             y: screen_height(),
         };
 
-        // Handle input
+        // Register input
         gamestate.input = keybindings.get_held_keys();
 
         // Update simulation
@@ -118,18 +120,11 @@ async fn main() {
         while gamestate.accumulator >= TICKS {
             gamestate.loop_number += 1;
 
-            // Discard missiles that are out of bounds
-            for missile in &gamestate.missiles {
-                if missile.is_out_of_bounds(&bounds) {
-                    gamestate
-                        .missile_changes
-                        .push(Change::Remove(missile.get_id()));
-                    continue;
-                }
-            }
+            gamestate.discard_out_of_bounds_missiles(&bounds);
 
             apply_changes(&mut gamestate.missiles, &mut gamestate.missile_changes);
 
+            // Main part of the loop
             for asteroid in &mut gamestate.asteroids {
                 if asteroid.get_size() == 0.0 {
                     gamestate
@@ -227,32 +222,9 @@ async fn main() {
                 }
             }
 
-            for text_bubble in &gamestate.texts {
-                if text_bubble.get_lifetime() <= 0.0 {
-                    gamestate
-                        .text_changes
-                        .push(Change::Remove(text_bubble.get_id()));
-                }
-            }
+            gamestate.discard_texts();
 
-            // Remove asteroids when the ship is destroyed
-            if !gamestate.spaceship.get_life()
-                && get_time() - end_cooldown >= 0.5
-                && gamestate.simulation_speed > 0.0
-            {
-                let mut rng = thread_rng();
-                for asteroid in &mut gamestate.asteroids {
-                    if rng.gen_range(0..=100) <= 50 {
-                        asteroid.split(
-                            (gamestate.number_of_asteroids + gamestate.asteroids_children as u32)
-                                < gamestate.asteroid_limit.into(),
-                            gamestate.asteroids_children,
-                            &mut gamestate.asteroid_changes,
-                        );
-                    }
-                }
-                end_cooldown = get_time();
-            }
+            gamestate.discard_asteroids_random(get_time(), &mut end_cooldown, 10);
 
             gamestate.accumulator -= TICKS;
         }
@@ -260,6 +232,7 @@ async fn main() {
         gamestate.update_all();
         gamestate.draw_all();
 
+        // Apply keybindings actions
         key_bindings::handle_input(&mut gamestate, &keybindings);
 
         // Menu and UI

@@ -1,15 +1,14 @@
-use crate::helpers::{generate_uid, Entity};
-use crate::import_entity;
+use ast_lib::generate_uid;
+use entity_derive::Entity;
+use ast_lib::CosmicEntity;
 
 use macroquad::prelude::{
-    draw_circle, measure_text, screen_dpi_scale, screen_height, screen_width, GOLD, GRAY, MAGENTA,
+    draw_circle, draw_text, measure_text, screen_dpi_scale, screen_height, screen_width, vec2, Vec2, GOLD, GRAY, MAGENTA,
     RED,
 };
+use std::f32::consts::PI;
 
-// Call the macro
-import_entity!(Missile);
-
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Entity)]
 pub struct Missile {
     id: u64,
     position: Vec2,

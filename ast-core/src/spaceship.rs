@@ -1,15 +1,14 @@
-use crate::helpers::{generate_uid, Entity};
-use crate::import_entity;
+use ast_lib::generate_uid;
+use entity_derive::Entity;
+use ast_lib::CosmicEntity;
 
 use macroquad::prelude::{
-    draw_circle, draw_circle_lines, draw_line, draw_triangle, measure_text, screen_dpi_scale,
-    screen_height, screen_width, Color, BLUE, LIME, PINK, RED, YELLOW,
+    draw_circle, draw_circle_lines, draw_line, draw_triangle, draw_text, measure_text, screen_dpi_scale,
+    screen_height, screen_width, vec2, Color, Vec2, BLUE, LIME, PINK, RED, YELLOW,
 };
+use std::f32::consts::PI;
 
-// Call the macro
-import_entity!(Spaceship);
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Entity)]
 pub struct Spaceship {
     id: u64,
     position: Vec2,

@@ -1,65 +1,16 @@
-use ::rand::distributions::{Distribution, WeightedIndex};
+use crate::{MISSING_TEXTURE, TEXTURE_SET};
+use ast_lib::{CosmicEntity, NamedTexture, Change, generate_uid, select_weighted_texture};
+use entity_derive::Entity;
 use ::rand::{thread_rng, Rng};
 
 use macroquad::prelude::{
-    draw_circle_lines, draw_line, draw_texture_ex, measure_text, screen_dpi_scale, screen_height,
-    screen_width, DrawTextureParams, Texture2D, BLUE, GREEN, RED, WHITE, YELLOW,
+    draw_circle_lines, draw_line, draw_texture_ex, draw_text, measure_text, screen_dpi_scale, screen_height,
+    screen_width, vec2, DrawTextureParams, Vec2, BLUE, GREEN, RED, WHITE, YELLOW,
 };
-use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::f32::consts::PI;
 
-use crate::helpers::{generate_uid, Change, Entity, NamedTexture, MISSING_TEXTURE, TEXTURE_SET};
-use crate::import_entity;
 
-import_entity!(Asteroid);
-
-/// Random texture selector with strict weights
-/// `custom_weights` must be provided and sum to 100.0
-pub fn select_weighted_texture<'a>(
-    textures: &'a BTreeMap<PathBuf, Texture2D>,
-    subdir: &str,
-    custom_weights: Vec<f32>,
-) -> Option<NamedTexture> {
-    // Filter keys to only include ones in the given subdir
-    let filtered_keys: Vec<&PathBuf> = textures
-        .keys()
-        .filter(|k| k.to_string_lossy().contains(subdir))
-        .collect();
-
-    let amount = filtered_keys.len();
-    if amount == 0 {
-        return None; // no textures in this subdir
-    }
-
-    if custom_weights.len() != amount {
-        panic!(
-            "Number of weights ({}) does not match number of textures ({})",
-            custom_weights.len(),
-            amount
-        );
-    }
-
-    let sum: f32 = custom_weights.iter().sum();
-    if (sum - 100.0).abs() > f32::EPSILON {
-        panic!("Sum of weights must be exactly 100.0, got {}", sum);
-    }
-
-    let mut rng = thread_rng();
-    let dist = WeightedIndex::new(&custom_weights).unwrap();
-    let selected_index = dist.sample(&mut rng);
-
-    let selected_path = filtered_keys[selected_index];
-    textures.get(selected_path).map(|tex| NamedTexture {
-        texture: tex.clone(),
-        name: selected_path
-            .file_stem()
-            .unwrap()
-            .to_string_lossy()
-            .to_string(),
-    })
-}
-
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Entity)]
 pub struct Asteroid {
     id: u64,
     position: Vec2,
@@ -102,7 +53,7 @@ impl Asteroid {
         let default_size = size.unwrap_or(rng.gen_range(2..=3) as f32 * Self::SCALE);
         let default_rotation = rotation.unwrap_or(Self::new_rotation());
         let default_direction =
-            direction.unwrap_or(rng.gen_range(0.0..=2.0 * std::f32::consts::PI));
+            direction.unwrap_or(rng.gen_range(0.0..=2.0 * PI));
         let default_speed_multiplier = speed_multiplier.unwrap_or(new_properties.1);
         let default_turn_rate = turn_rate.unwrap_or(rng.gen_range(0.5..1.5) * if rng.gen_bool(0.5) { 1.0 } else { -1.0 });
 

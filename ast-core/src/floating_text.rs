@@ -1,10 +1,8 @@
-use crate::helpers::generate_uid;
-use crate::import_entity;
-use macroquad::prelude::Color;
-// Call the macro
-import_entity!(LifetimedText);
+use entity_derive::Entity;
+use ast_lib::generate_uid;
+use macroquad::prelude::{draw_text, Color, Vec2};
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Entity)]
 pub struct LifetimedText {
     id: u64,
     lifetime: f64,

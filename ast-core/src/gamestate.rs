@@ -1,13 +1,16 @@
 use crate::asteroid::Asteroid;
-use crate::helpers::{apply_changes, Change, Entity, TEXTURE_SET};
+use crate::{TEXTURE_SET};
+use ast_lib::{CosmicEntity, Change, apply_changes};
+
 use crate::missile::Missile;
 use crate::spaceship::Spaceship;
-use crate::LifetimedText;
+use crate::floating_text::LifetimedText;
 
 use macroquad::color::WHITE;
 use macroquad::prelude::{
     draw_texture_ex, screen_height, screen_width, DrawTextureParams, Texture2D, Vec2,
 };
+use rand::{thread_rng, Rng};
 
 use std::path::PathBuf;
 
@@ -195,6 +198,52 @@ impl Gamestate {
         self.number_of_asteroids = self.asteroids.len() as u32;
 
         self.update_ending();
+    }
+
+    // Main functions
+
+    pub fn discard_out_of_bounds_missiles(&mut self, bounds: &Vec2) {
+        // Discard missiles that are out of bounds
+            for missile in &self.missiles {
+                if missile.is_out_of_bounds(bounds) {
+                    self
+                        .missile_changes
+                        .push(Change::Remove(missile.get_id()));
+                    continue;
+                }
+            }
+    }
+
+    /// Time should be the current time, cooldown is the stored variable
+    pub fn discard_asteroids_random(&mut self, time: f64, cooldown: &mut f64, chance: u16) {
+        // Remove asteroids when the ship is destroyed
+            if !self.spaceship.get_life()
+                && time - *cooldown >= 0.5
+                && self.simulation_speed > 0.0
+            {
+                let mut rng = thread_rng();
+                for asteroid in &mut self.asteroids {
+                    if rng.gen_range(0..=100) <= chance {
+                        asteroid.split(
+                            (self.number_of_asteroids + self.asteroids_children as u32)
+                                < self.asteroid_limit.into(),
+                            self.asteroids_children,
+                            &mut self.asteroid_changes,
+                        );
+                    }
+                }
+                *cooldown = time;
+            }
+    }
+
+    pub fn discard_texts(&mut self) {
+        for text_bubble in &self.texts {
+                if text_bubble.get_lifetime() <= 0.0 {
+                    self
+                        .text_changes
+                        .push(Change::Remove(text_bubble.get_id()));
+                }
+            }
     }
 
     pub fn draw_all(&mut self) {

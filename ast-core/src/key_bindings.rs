@@ -1,5 +1,5 @@
-use crate::general::Gamestate;
-use crate::helpers::Entity;
+use crate::gamestate::Gamestate;
+use ast_lib::CosmicEntity;
 use rdev::{listen, Button, Event, EventType, Key};
 use serde::{Deserialize, Serialize};
 use std::{

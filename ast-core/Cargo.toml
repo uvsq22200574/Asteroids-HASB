@@ -1,0 +1,18 @@
+[package]
+name = "ast-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+entity_derive = { path = "../entity_derive" }
+ast-lib = { path = "../ast-lib" }
+
+once_cell = "1.21.3"
+chrono = "0.4.38"
+rdev = "0.5.3" # Input
+pollster = "0.4.0" # Texture
+rand = { version = "0.8", features = ["small_rng"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+macroquad = "0.4" # Render Engine

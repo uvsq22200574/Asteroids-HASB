@@ -2,7 +2,7 @@ use chrono::Local;
 use macroquad::prelude::*;
 use std::env;
 
-use crate::general::Gamestate;
+use crate::gamestate::Gamestate;
 
 fn button(
     x: f32,

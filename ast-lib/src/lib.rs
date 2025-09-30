@@ -115,7 +115,7 @@ pub fn select_weighted_texture<'a>(
 // ==== TRAITS ====
 
 /// Trait defining entity behavior
-pub trait CosmicEntity: Clone {
+pub trait CosmicEntity {
     fn get_id(&self) -> u64;
     fn clone_with_new_uid(&self) -> Self;
     fn get_position(&self) -> Vec2;

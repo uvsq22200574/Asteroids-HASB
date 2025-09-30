@@ -1,5 +1,5 @@
 use ast_lib::generate_uid;
-use entity_derive::Entity;
+use mac_der::Entity;
 use ast_lib::CosmicEntity;
 
 use macroquad::prelude::{

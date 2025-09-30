@@ -1,4 +1,4 @@
-use entity_derive::Entity;
+use mac_der::Entity;
 use ast_lib::generate_uid;
 use macroquad::prelude::{draw_text, Color, Vec2};
 

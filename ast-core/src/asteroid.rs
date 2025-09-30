@@ -1,6 +1,6 @@
 use crate::{MISSING_TEXTURE, TEXTURE_SET};
 use ast_lib::{CosmicEntity, NamedTexture, Change, generate_uid, select_weighted_texture};
-use entity_derive::Entity;
+use mac_der::Entity;
 use ::rand::{thread_rng, Rng};
 
 use macroquad::prelude::{

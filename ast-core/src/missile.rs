@@ -32,7 +32,7 @@ impl Missile {
             rotation,
             lifetime: 20.0,
             size: 4.0,
-            turn_rate: 7.5,
+            turn_rate: 700.5,
             acceleration: 200.0,
             homing,
             target,

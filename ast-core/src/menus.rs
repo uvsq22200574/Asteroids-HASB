@@ -1,5 +1,5 @@
 use chrono::Local;
-use macroquad::prelude::{Color, MouseButton, mouse_position, draw_rectangle, draw_text, measure_text, is_mouse_button_pressed, screen_width, screen_dpi_scale, clear_background, BLACK, WHITE, RED, GREEN, BLUE, PURPLE, BEIGE, GRAY, GOLD, YELLOW};
+use macroquad::prelude::{Color, MouseButton, mouse_position, draw_rectangle, draw_text, measure_text, is_mouse_button_pressed, screen_width, screen_dpi_scale, clear_background, BLACK, WHITE, RED, GREEN, BLUE, PURPLE, BEIGE, GRAY, GOLD, YELLOW, ORANGE};
 use std::env;
 
 use crate::gamestate::Gamestate;

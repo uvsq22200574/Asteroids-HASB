@@ -1,9 +1,8 @@
-use macroquad::prelude::{Vec2, Texture2D, FilterMode, load_texture};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::{sync::atomic::{AtomicU64, Ordering}, collections::BTreeMap, path::PathBuf};
+use macroquad::prelude::{Vec2, Texture2D, FilterMode, Image, load_texture};
 use walkdir::WalkDir;
 use futures::stream::{self, StreamExt};
+use once_cell::sync::Lazy;
 use ::rand::{distributions::{Distribution, WeightedIndex}, thread_rng};
 
 // ==== CONSTANTS ====
@@ -18,6 +17,30 @@ pub struct NamedTexture {
 }
 
 // ==== TEXTURES ====
+
+pub static MISSING_TEXTURE: Lazy<NamedTexture> = Lazy::new(|| {
+    let pixels: Vec<u8> = vec![
+        255, 0, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255, 255,
+    ];
+    let image = Image {
+        bytes: pixels,
+        width: 2,
+        height: 2,
+    };
+    let tex = Texture2D::from_image(&image);
+    tex.set_filter(FilterMode::Nearest);
+
+    NamedTexture {
+        texture: tex,
+        name: "MISSING_TEXTURE".to_string(),
+    }
+});
+
+pub static TEXTURE_SET: Lazy<BTreeMap<PathBuf, Texture2D>> = Lazy::new(|| {
+    pollster::block_on(async {
+        load_textures_recursive_parallel(PathBuf::from("./assets/textures")).await
+    })
+});
 
 /// Load textures recursively
 pub async fn load_textures_recursive_parallel(root: PathBuf) -> BTreeMap<PathBuf, Texture2D> {

@@ -1,13 +1,11 @@
-use crate::{MISSING_TEXTURE, TEXTURE_SET};
-use ast_lib::{CosmicEntity, NamedTexture, Change, generate_uid, select_weighted_texture};
+use ast_lib::{CosmicEntity, NamedTexture, Change, generate_uid, select_weighted_texture, MISSING_TEXTURE, TEXTURE_SET};
 use mac_der::Entity;
-use ::rand::{thread_rng, Rng};
-
+use std::f32::consts::PI;
 use macroquad::prelude::{
     draw_circle_lines, draw_line, draw_texture_ex, draw_text, measure_text, screen_dpi_scale, screen_height,
     screen_width, vec2, DrawTextureParams, Vec2, BLUE, GREEN, RED, WHITE, YELLOW,
 };
-use std::f32::consts::PI;
+use ::rand::{thread_rng, Rng};
 
 
 #[derive(PartialEq, Clone, Entity)]

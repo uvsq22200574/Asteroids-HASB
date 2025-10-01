@@ -50,8 +50,6 @@ dependencies = [
  "chrono",
  "mac-der",
  "macroquad",
- "once_cell",
- "pollster",
  "rand",
  "rdev",
  "serde",
@@ -64,6 +62,8 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.31",
  "macroquad",
+ "once_cell",
+ "pollster",
  "rand",
  "walkdir",
 ]

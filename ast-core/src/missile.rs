@@ -1,7 +1,6 @@
 use ast_lib::generate_uid;
 use mac_der::Entity;
 use ast_lib::CosmicEntity;
-
 use macroquad::prelude::{
     draw_circle, draw_text, measure_text, screen_dpi_scale, screen_height, screen_width, vec2, Vec2, GOLD, GRAY, MAGENTA,
     RED,

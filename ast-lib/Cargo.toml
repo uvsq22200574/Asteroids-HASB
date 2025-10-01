@@ -8,3 +8,5 @@ macroquad = "0.4" # Render Engine
 rand = { version = "0.8", features = ["small_rng"] }
 walkdir = "2"
 futures = "0.3"
+once_cell = "1.21.3"
+pollster = "0.4.0" # Texture

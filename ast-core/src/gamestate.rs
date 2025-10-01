@@ -1,18 +1,10 @@
-use crate::asteroid::Asteroid;
-use crate::{TEXTURE_SET};
-use ast_lib::{CosmicEntity, Change, apply_changes};
-
-use crate::missile::Missile;
-use crate::spaceship::Spaceship;
-use crate::floating_text::LifetimedText;
-
-use macroquad::color::WHITE;
+use crate::{asteroid::Asteroid, missile::Missile, spaceship::Spaceship, floating_text::LifetimedText};
+use ast_lib::{CosmicEntity, Change, apply_changes, TEXTURE_SET};
+use std::path::PathBuf;
 use macroquad::prelude::{
-    draw_texture_ex, screen_height, screen_width, DrawTextureParams, Texture2D, Vec2,
+    draw_texture_ex, screen_height, screen_width, DrawTextureParams, Texture2D, Vec2, WHITE
 };
 use rand::{thread_rng, Rng};
-
-use std::path::PathBuf;
 
 pub const TICKS: f64 = 1.0 / 60.0;
 

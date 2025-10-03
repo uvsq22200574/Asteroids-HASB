@@ -224,7 +224,8 @@ async fn main() {
 
             gamestate.discard_texts();
 
-            gamestate.discard_asteroids_random(get_time(), &mut end_cooldown, 10);
+            // End Game gimmick
+            gamestate.discard_asteroids_random(get_time(), &mut end_cooldown, 50);
 
             gamestate.accumulator -= TICKS;
         }

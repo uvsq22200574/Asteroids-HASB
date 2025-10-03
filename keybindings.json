@@ -39,6 +39,34 @@
       "modifiers": []
     }
   ],
+  "IncreaseMissileCapacity": [
+    {
+      "input": {
+        "Key": "KeyI"
+      },
+      "modifiers": []
+    },
+    {
+      "input": {
+        "Scroll": "ScrollUp"
+      },
+      "modifiers": []
+    }
+  ],
+  "DecreaseMissileCapacity": [
+    {
+      "input": {
+        "Key": "KeyK"
+      },
+      "modifiers": []
+    },
+    {
+      "input": {
+        "Scroll": "ScrollDown"
+      },
+      "modifiers": []
+    }
+  ],
   "Fire": [
     {
       "input": {
@@ -111,22 +139,6 @@
     {
       "input": {
         "Key": "ShiftLeft"
-      },
-      "modifiers": []
-    }
-  ],
-  "ScrollUp": [
-    {
-      "input": {
-        "Scroll": "ScrollUp"
-      },
-      "modifiers": []
-    }
-  ],
-  "ScrollDown": [
-    {
-      "input": {
-        "Scroll": "ScrollDown"
       },
       "modifiers": []
     }

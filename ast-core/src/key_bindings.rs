@@ -140,6 +140,17 @@ impl KeyBindings {
         );
     }
 
+    /// Bind a scroll wheel direction to an action
+    pub fn bind_scroll(&mut self, action: Action, direction: &str) {
+        self.bind(
+            action,
+            KeyCombo {
+                input: KeyInput::Scroll(direction.into()),
+                modifiers: Vec::new(),
+            },
+        );
+    }
+
     /// Call this at the end of your main loop to clear transient states
     pub fn clear_events(&self) {
         let mut input = self.input_state.lock().unwrap();
@@ -274,6 +285,30 @@ impl KeyBindings {
         self.is_combo_active(&input.just_released, action)
     }
 
+    /// Returns the total scroll magnitude for an action in the current frame
+    pub fn is_scrolled(&self, action: Action) -> u8 {
+        let input = self.input_state.lock().unwrap();
+        let mut total: u8 = 0;
+
+        // Look up all combos bound to this action
+        if let Some(combos) = self.bindings.get(&action) {
+            for combo in combos {
+                if let KeyInput::Scroll(direction) = &combo.input {
+                    // Sum up all scroll deltas in just_pressed
+                    for event in &input.just_pressed {
+                        if let Some(rest) = event.strip_prefix(&format!("{}:", direction)) {
+                            if let Ok(value) = rest.parse::<u8>() {
+                                total += value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        total
+    }
+
     /// Helper to check if an action's key combinations are active.
     ///
     /// A combination is considered **active** if:
@@ -342,6 +377,9 @@ pub enum Action {
     MoveRight,
     Stop,
 
+    IncreaseMissileCapacity,
+    DecreaseMissileCapacity,
+
     Fire,
     FireHoming,
 
@@ -360,17 +398,27 @@ pub enum Action {
 pub fn default_keybindings() -> KeyBindings {
     let mut kb = KeyBindings::new();
 
+    // ==== Movement ====
     kb.bind_key(Action::SpeedUp, Key::KeyW);
     kb.bind_key(Action::SpeedDown, Key::KeyS);
     kb.bind_key(Action::MoveLeft, Key::KeyA);
     kb.bind_key(Action::MoveRight, Key::KeyD);
     kb.bind_mouse(Action::Stop, Button::Middle);
 
+    // ==== Firing ====
     kb.bind_mouse(Action::Fire, Button::Left);
     kb.bind_mouse(Action::FireHoming, Button::Right);
     kb.bind_key(Action::Fire, Key::KeyQ);
     kb.bind_key(Action::FireHoming, Key::KeyE);
 
+    // ==== Missile Capacity ====
+    kb.bind_key(Action::DecreaseMissileCapacity, Key::KeyK);
+    kb.bind_key(Action::IncreaseMissileCapacity, Key::KeyI);
+    // Scroll
+    kb.bind_scroll(Action::IncreaseMissileCapacity, "ScrollUp");
+    kb.bind_scroll(Action::DecreaseMissileCapacity, "ScrollDown");
+
+    // ==== Misc ====
     kb.bind_key(Action::ToggleDebug, Key::F3);
     kb.bind_key(Action::Confirm, Key::Return);
     kb.bind_key(Action::Escape, Key::Escape);
@@ -379,28 +427,11 @@ pub fn default_keybindings() -> KeyBindings {
     kb.bind_key(Action::Accelerate, Key::Tab);
     kb.bind_key(Action::SlowDown, Key::ShiftLeft);
 
-    // Scroll
-    kb.bind(
-        Action::ScrollUp,
-        KeyCombo {
-            input: KeyInput::Scroll("ScrollUp".into()),
-            modifiers: Vec::new(),
-        },
-    );
-    kb.bind(
-        Action::ScrollDown,
-        KeyCombo {
-            input: KeyInput::Scroll("ScrollDown".into()),
-            modifiers: Vec::new(),
-        },
-    );
-
     kb
 }
 
 pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {
     let turn_rate = gamestate.spaceship.get_turn_rate();
-    let input_snapshot = keybindings.input_state.lock().unwrap().clone();
 
     // Toggle debug
     if keybindings.is_action_pressed(Action::ToggleDebug) {
@@ -479,26 +510,12 @@ pub fn handle_input(gamestate: &mut Gamestate, keybindings: &KeyBindings) {
         gamestate.spaceship.set_homming_cooldown(0.8);
     }
 
-    // Scroll handling (capacity changes)
-    // One-shot actions
-    if keybindings.is_action_pressed(Action::ScrollUp) && gamestate.simulation_speed > 0.0 {
+    // Missile capacity
+    if (keybindings.is_action_pressed(Action::IncreaseMissileCapacity) || keybindings.is_scrolled(Action::IncreaseMissileCapacity) != 0) && gamestate.simulation_speed > 0.0 {
         gamestate.spaceship.modify_capacity(1);
     }
-    if keybindings.is_action_pressed(Action::ScrollDown) && gamestate.simulation_speed > 0.0 {
+    if (keybindings.is_action_pressed(Action::DecreaseMissileCapacity) || keybindings.is_scrolled(Action::DecreaseMissileCapacity) != 0) && gamestate.simulation_speed > 0.0 {
         gamestate.spaceship.modify_capacity(-1);
-    }
-
-    // Accumulated scroll changes
-    for key in &input_snapshot.just_pressed {
-        if let Some(rest) = key.strip_prefix("ScrollUp:") {
-            if let Ok(value) = rest.parse::<i8>() {
-                gamestate.spaceship.modify_capacity(value);
-            }
-        } else if let Some(rest) = key.strip_prefix("ScrollDown:") {
-            if let Ok(value) = rest.parse::<i8>() {
-                gamestate.spaceship.modify_capacity(-value);
-            }
-        }
     }
 
     // Time manipulation
